@@ -106,18 +106,33 @@ public extension SwiftyESBuild {
     enum RunOption: Hashable {
         /**
          Bundle all dependencies into the output files
+         Flag: --bundle
          */
         case bundle
 
         /**
          The output file (for one entry point)
+         Flag --outfile
          */
         case outfile(AbsolutePath)
         
         /**
          Passes the arguments as raw values to the executable.
+         {...arguments}
          */
         case arguments([String])
+        
+        /**
+         Substitute substituted with substitute while parsing
+         Flag: --define
+         */
+        case define(substituted: String, substitute: String)
+        
+        /**
+         Excludes the Javascript module that matches the given wildcard from the bundle:
+         Flag: --external
+         */
+        case external(wildcard: String)
         
         /**
          The CLI flag that represents the option.
@@ -129,6 +144,10 @@ public extension SwiftyESBuild {
                 return ["--outfile=\(outputFilePath.pathString)"]
             case .arguments(let arguments):
                 return arguments
+            case .define(let substituted, let substitute):
+                return ["--define:\(substituted)=\(substitute)"]
+            case .external(let wildcard):
+                return ["--external:\(wildcard)"]
             }
         }
     }
