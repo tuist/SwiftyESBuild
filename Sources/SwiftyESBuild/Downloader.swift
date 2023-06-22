@@ -87,7 +87,7 @@ class Downloader: Downloading {
     init(architectureDetector: ArchitectureDetecting = ArchitectureDetector(),
          tar: Tarring = Tar()) {
         self.architectureDetector = architectureDetector
-        self.logger = Logger(label: "me.pepicrft.SwiftyESBuild.Downloader")
+        self.logger = Logger(label: "io.tuist.SwiftyESBuild.Downloader")
         self.tar = tar
     }
     
@@ -200,7 +200,7 @@ class Downloader: Downloading {
         do {
             var request = HTTPClientRequest(url: packageURL)
             request.headers.add(name: "Content-Type", value: "application/json")
-            request.headers.add(name: "User-Agent", value: "me.pepicrft.SwiftyESBuild")
+            request.headers.add(name: "User-Agent", value: "io.tuist.SwiftyESBuild")
             let response = try await httpClient.execute(request, timeout: .seconds(30))
             let body = try await response.body.collect(upTo: 1024 * 1024)
             package = try JSONDecoder().decode(NPMPackage.self, from: Data(buffer: body))

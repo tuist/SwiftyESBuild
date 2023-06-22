@@ -26,7 +26,7 @@ class Executor: Executing {
      Creates a new instance of `Executor`
      */
     init() {
-        self.logger = Logger(label: "me.pepicrft.SwiftyESBuild.Executor")
+        self.logger = Logger(label: "io.tuist.SwiftyESBuild.Executor")
     }
     
     func run(executablePath: TSCBasic.AbsolutePath, directory: AbsolutePath, arguments: [String]) async throws {

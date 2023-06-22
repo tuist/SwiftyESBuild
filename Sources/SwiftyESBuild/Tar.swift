@@ -22,7 +22,7 @@ class Tar: Tarring {
      Default constructor.
      */
     init() {
-        self.logger = Logger(label: "me.pepicrft.SwiftyESBuild.Tar")
+        self.logger = Logger(label: "io.tuist.SwiftyESBuild.Tar")
     }
     
     func extract(tar: AbsolutePath) async throws {
