@@ -49,7 +49,7 @@ class Executor: Executing {
                     }
                 }), startNewProcessGroup: true)
                 do {
-                    let inputStream = try process.launch()
+                    let _ = try process.launch()
                     try process.waitUntilExit()
                     continuation.resume()
                 } catch {

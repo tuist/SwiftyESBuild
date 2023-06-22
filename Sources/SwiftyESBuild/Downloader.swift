@@ -4,20 +4,59 @@ import TSCBasic
 import AsyncHTTPClient
 import NIOCore
 import NIOFoundationCompat
+import TSCUtility
+import TSCBasic
+
+/**
+ It represents the payload returned by the https://registry.npmjs.org/{package} URL. SwiftyESBuild uses the information in the payload to determine the latest version and the URL from where we can download a given version.
+ */
+struct NPMPackage: Decodable {
+    
+    struct DistTags: Decodable {
+        let latest: String
+    }
+    
+    struct Version: Decodable {
+        struct Dist: Decodable {
+            let tarball: String
+            let shasum: String
+            let integrity: String
+        }
+        let dist: Dist
+    }
+    
+    let name: String
+    let distTags: DistTags
+    let versions: [String: Version]
+    
+    enum CodingKeys : String, CodingKey {
+        case distTags = "dist-tags"
+        case versions
+        case name
+    }
+    
+}
 
 /*
  An enum that represents the various errors that the `Downloader` can throw.
  */
 enum DownloaderError: LocalizedError {
     /**
-     This error is thrown when the binary name cannot be determined.
+     This error is thrown when we can't determine the NPM packag ename.
      */
-    case unableToDetermineBinaryName
+    case unableToDeterminePackageName
+    
+    /**
+     This error is thrown when the version can't be found in the payload returned by the NPM registry.
+     */
+    case versionNotFound(String)
     
     var errorDescription: String? {
         switch self {
-        case .unableToDetermineBinaryName:
-            return "We were unable to determine ESBuild's binary name for this architecture and OS."
+        case .unableToDeterminePackageName:
+            return "We were unable to determine ESBuild's package name for this architecture and OS."
+        case .versionNotFound(let version):
+            return "The payload returned by https://registry.npmjs.org/@esbuild/{os}-{arch} doesn't contain the version \(version)"
         }
     }
 }
@@ -36,6 +75,7 @@ protocol Downloading {
 class Downloader: Downloading {
     let architectureDetector: ArchitectureDetecting
     let logger: Logger
+    let tar: Tarring
     
     /**
      Returns the default directory where ESBuild binaries should be downloaded.
@@ -44,9 +84,11 @@ class Downloader: Downloading {
         return try! localFileSystem.tempDirectory.appending(component: "SwiftyESBuild")
     }
     
-    init(architectureDetector: ArchitectureDetecting = ArchitectureDetector()) {
+    init(architectureDetector: ArchitectureDetecting = ArchitectureDetector(),
+         tar: Tarring = Tar()) {
         self.architectureDetector = architectureDetector
         self.logger = Logger(label: "me.pepicrft.SwiftyESBuild.Downloader")
+        self.tar = tar
     }
     
     func download() async throws -> TSCBasic.AbsolutePath {
@@ -56,40 +98,61 @@ class Downloader: Downloading {
     func download(version: ESBuildVersion,
                   directory: AbsolutePath) async throws -> AbsolutePath
     {
-        guard let binaryName = binaryName() else {
-            throw DownloaderError.unableToDetermineBinaryName
-        }
-        let expectedVersion = try await versionToDownload(version: version)
-        let binaryPath = directory.appending(components: [expectedVersion, binaryName])
+        let npmPackage = try await self.npmPackage()
+        let expectedVersion = try await versionToDownload(version: version, npmPackage: npmPackage)
+        let binaryPath = directory.appending(components: [expectedVersion, "esbuild"])
         if localFileSystem.exists(binaryPath) { return binaryPath }
-        try await downloadBinary(name: binaryName, version: expectedVersion, to: binaryPath)
+        try await downloadBinary(npmPackage: npmPackage, version: expectedVersion, to: binaryPath)
         return binaryPath
     }
     
-    private func downloadBinary(name: String, version: String, to downloadPath: AbsolutePath) async throws {
+    // MARK: - Private
+    
+    private func downloadBinary(npmPackage: NPMPackage, version: String, to downloadPath: AbsolutePath) async throws {
         if !localFileSystem.exists(downloadPath.parentDirectory) {
             logger.debug("Creating directory \(downloadPath.parentDirectory)")
             try localFileSystem.createDirectory(downloadPath.parentDirectory, recursive: true)
         }
-        let url = "https://github.com/tailwindlabs/tailwindcss/releases/download/\(version)/\(name)"
-        logger.debug("Downloading binary \(name) from version \(version)...")
+        guard let npmVersion = npmPackage.versions[version]?.dist else {
+            throw DownloaderError.versionNotFound(version)
+        }
+        
+        logger.debug("Downloading \(npmPackage.name) from \(npmVersion.tarball)...")
         let client = HTTPClient(eventLoopGroupProvider: .createNew)
-        let request = try HTTPClient.Request(url: url)
-        let delegate = try FileDownloadDelegate(path: downloadPath.pathString, reportProgress: { [weak self] in
-            if let totalBytes = $0.totalBytes {
-                self?.logger.debug("Total bytes count: \(totalBytes)")
-            }
-            self?.logger.debug("Downloaded \($0.receivedBytes) bytes so far")
-        })
+
         do {
-            try await withCheckedThrowingContinuation { continuation in
-                client.execute(request: request, delegate: delegate).futureResult.whenComplete { result in
-                    switch result {
-                    case .success(_):
-                        try? localFileSystem.chmod(.executable, path: downloadPath)
-                        continuation.resume()
-                    case .failure(let error):
-                        continuation.resume(throwing: error)
+            try await withTemporaryDirectory(removeTreeOnDeinit: true) { tmpDir in
+                let tgzPath = tmpDir.appending(component: "esbuild.tgz")
+                
+                let request = try HTTPClient.Request(url: URL(string: npmVersion.tarball)!)
+                let delegate = try FileDownloadDelegate(path: tgzPath.pathString, reportProgress: { [weak self] in
+                    if let totalBytes = $0.totalBytes {
+                        self?.logger.debug("Total bytes count: \(totalBytes)")
+                    }
+                    self?.logger.debug("Downloaded \($0.receivedBytes) bytes so far")
+                })
+                
+                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                    client.execute(request: request, delegate: delegate).futureResult.whenComplete { result in
+                        switch result {
+                        case .success(_):
+                                Task {
+                                    do {
+                                        // TODO: Do checksum validation
+                                        try await self.tar.extract(tar: tgzPath)
+                                        let binaryPath = tgzPath.parentDirectory.appending(.init("package/bin/esbuild"))
+                                        try localFileSystem.chmod(.executable, path: binaryPath)
+                                        try localFileSystem.move(from: binaryPath, to: downloadPath)
+                                        continuation.resume()
+                                    } catch {
+                                        print(error)
+                                        continuation.resume(throwing: error)
+                                        return
+                                    }
+                                }
+                        case .failure(let error):
+                            continuation.resume(throwing: error)
+                        }
                     }
                 }
             }
@@ -103,7 +166,7 @@ class Downloader: Downloading {
     /**
      Returns the version that should be downloaded.
      */
-    private func versionToDownload(version: ESBuildVersion) async throws -> String {
+    private func versionToDownload(version: ESBuildVersion, npmPackage: NPMPackage) async throws -> String {
         switch version {
         case .fixed(let rawVersion):
             if rawVersion.starts(with: "v") {
@@ -114,29 +177,33 @@ class Downloader: Downloading {
                  */
                 return "v\(rawVersion)"
             }
-        case .latest: return try await latestVersion()
+        case .latest: return npmPackage.distTags.latest
         }
     }
     
     /**
-     It obtains the latest available release from GitHub releases
+     It returns the NPM package metadata from the https://registry.npmjs.org/{package-name} URL.
+     ESBuild has a package per architecture and OS supported. For example, we can obtain the metadata
+     for the package for macOS arm64 from:
+     https://registry.npmjs.org/@esbuild/darwin-arm64
      */
-    private func latestVersion() async throws -> String {
-        let latestReleaseURL = "https://registry.npmjs.org/@esbuild/darwin-arm64"
-        logger.debug("Getting the latest ESBuild version from \(latestReleaseURL)")
+    private func npmPackage() async throws -> NPMPackage {
+        guard let npmPackageName = self.npmPackageName() else {
+            throw DownloaderError.unableToDeterminePackageName
+        }
+        let packageURL = "https://registry.npmjs.org/\(npmPackageName)"
+        logger.debug("Getting the package metadata from \(packageURL)")
         
         let httpClient = HTTPClient(eventLoopGroupProvider: .createNew)
         
-        var tagName: String!
+        var package: NPMPackage!
         do {
-            var request = HTTPClientRequest(url: latestReleaseURL)
+            var request = HTTPClientRequest(url: packageURL)
             request.headers.add(name: "Content-Type", value: "application/json")
             request.headers.add(name: "User-Agent", value: "me.pepicrft.SwiftyESBuild")
             let response = try await httpClient.execute(request, timeout: .seconds(30))
             let body = try await response.body.collect(upTo: 1024 * 1024)
-            let json = try! JSONSerialization.jsonObject(with: Data(buffer: body)) as! [String: Any]
-            tagName = json["tag_name"] as! String
-            logger.debug("The latest ESBuild version available is \(tagName!)")
+            package = try JSONDecoder().decode(NPMPackage.self, from: Data(buffer: body))
         } catch {
             try await httpClient.shutdown()
             throw error
@@ -144,26 +211,26 @@ class Downloader: Downloading {
         
         try await httpClient.shutdown()
         
-        return tagName
+        return package
     }
     
     /**
-        It returns the name of the artifact that we should pull from the GitHub release. The artifact follows the convention: tailwindcss-{os}-{arch}
+        It returns the name of the NPM package for the current OS and architecture. The name follows the convention:
+        @esbuild/{os}-{arch}
+        For example @esbuild/darwin-arm64
      */
-    private func binaryName() -> String? {
-        guard let architecture = architectureDetector.architecture()?.tailwindValue else {
+    private func npmPackageName() -> String? {
+        guard let architecture = architectureDetector.architecture()?.esbuildValue else {
             return nil
         }
         var os: String!
-        var ext: String! = ""
         #if os(Windows)
         os = "windows"
-        ext = ".exe"
         #elseif os(Linux)
         os = "linux"
         #else
-        os = "macos"
+        os = "darwin"
         #endif
-        return "tailwindcss-\(os as String)-\(architecture)\(ext as String)"
+        return "@esbuild/\(os!)-\(architecture)"
     }
 }

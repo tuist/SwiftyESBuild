@@ -16,6 +16,26 @@ First, you need to add `SwiftyESBuild` as a dependency in your project's `Packag
 .package(url: "https://github.com/pepicrft/SwiftyESBuild.git", .upToNextMinor(from: "0.1.0"))
 ```
 
+Once added, you'll create an instance of `SwiftyESBuild` specifying the version you'd like to use and where you'd like it to be downloaded.
+
+```swift
+let esbuild = SwiftyESBuild(version: .latest, directory: "./cache")
+```
+
+If you don't pass any argument, it defaults to the latest version in the system's default temporary directory. If you work in a team, we recommend fixing the version to minimize non-determinism across environments.
+
+### Running ESBuild
+
+To run ESBuild you need to invoke the `run` function:
+
+```swift
+import TSCBasic // AbsolutePath
+
+let entryPointPath = AbsolutePath(validating: "/project/index.js")
+let outputBundlePath = AbsolutePath(validating: "/projects/build/index.js")
+try await esbuild.run(entryPoint: entryPointPath, options: .bundle, .outfile(outputBundlePath))
+```
+
 ## Sponsor ❤️
 
 If you appreciate this work, I kindly invite you to consider [sponsoring me](https://github.com/sponsors/pepicrft). Your support brings me one step closer to realizing my dream of making a living through open source contributions. With your sponsorship, I can continue dedicating my time and effort to creating valuable open source projects and providing ongoing support to the community. Together, let's fuel the advancement of open source and pave the way for a sustainable future.
