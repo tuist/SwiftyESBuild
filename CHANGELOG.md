@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0
+
 ### Added
 
 - Added missing basic options to `SwiftyESBuild.RunOption`.

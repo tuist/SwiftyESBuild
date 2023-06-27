@@ -8,7 +8,7 @@
 First, you need to add `SwiftyESBuild` as a dependency in your project's `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/tuist/SwiftyESBuild.git", .upToNextMinor(from: "0.1.0"))
+.package(url: "https://github.com/tuist/SwiftyESBuild.git", .upToNextMinor(from: "0.2.0"))
 ```
 
 Once added, you'll create an instance of `SwiftyESBuild` specifying the version you'd like to use and where you'd like it to be downloaded.
