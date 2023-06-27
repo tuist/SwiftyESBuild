@@ -1,6 +1,6 @@
 import Foundation
-import TSCBasic
 import Logging
+import TSCBasic
 
 /**
  A protocol that defines the interface to extract the content from a tar file.
@@ -17,16 +17,16 @@ protocol Tarring {
  */
 class Tar: Tarring {
     let logger: Logger
-    
+
     /**
      Default constructor.
      */
     init() {
-        self.logger = Logger(label: "io.tuist.SwiftyESBuild.Tar")
+        logger = Logger(label: "io.tuist.SwiftyESBuild.Tar")
     }
-    
+
     func extract(tar: AbsolutePath) async throws {
-        let process = Process(arguments: ["/usr/bin/env","tar", "-xvf", tar.pathString], workingDirectory: tar.parentDirectory)
+        let process = Process(arguments: ["/usr/bin/env", "tar", "-xvf", tar.pathString], workingDirectory: tar.parentDirectory)
         _ = try process.launch()
         try await process.waitUntilExit()
     }

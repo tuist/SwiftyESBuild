@@ -1,7 +1,7 @@
-import XCTest
+@testable import SwiftyESBuild
 import TSCBasic
 import TSCUtility
-@testable import SwiftyESBuild
+import XCTest
 
 final class SwiftyESBuildTests: XCTestCase {
     func testExample() async throws {
@@ -10,7 +10,7 @@ final class SwiftyESBuildTests: XCTestCase {
             let subject = SwiftyESBuild(directory: tmpDir)
             let aModule = """
             import run from "./b.js"
-            
+
             run()
             """
             let bModule = """
@@ -23,12 +23,12 @@ final class SwiftyESBuildTests: XCTestCase {
             let outputBundlePath = tmpDir.appending(component: "output.js")
             try localFileSystem.writeFileContents(aModulePath, bytes: .init(encodingAsUTF8: aModule))
             try localFileSystem.writeFileContents(bModulePath, bytes: .init(encodingAsUTF8: bModule))
-            
+
             // When
             try await subject.run(entryPoint: aModulePath, options: .bundle, .outfile(outputBundlePath))
-            
+
             // Then
-            let content = String(bytes: try localFileSystem.readFileContents(outputBundlePath).contents, encoding: .utf8)
+            let content = try String(bytes: localFileSystem.readFileContents(outputBundlePath).contents, encoding: .utf8)
             XCTAssertTrue(content?.contains("console.log(\"esbuild\")") ?? false)
         }
     }

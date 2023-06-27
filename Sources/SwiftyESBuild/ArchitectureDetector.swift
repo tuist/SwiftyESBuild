@@ -2,19 +2,19 @@ import Foundation
 import TSCBasic
 import TSCUtility
 
-public enum CpuArchitecture: String, Hashable  {
-    case arm = "arm"
-    case arm64   = "arm64"
-    case armv7   = "armv7"
-    case x64 = "x64"
-    case x86_64   = "x86_64"
-    case ia32 = "ia32"
-    case loong64 = "loong64"
-    case mips64el = "mips64el"
-    case ppc64 = "ppc64"
-    case riscv64 = "riscv64"
-    case s390x = "s390x"
-    
+public enum CpuArchitecture: String, Hashable {
+    case arm
+    case arm64
+    case armv7
+    case x64
+    case x86_64
+    case ia32
+    case loong64
+    case mips64el
+    case ppc64
+    case riscv64
+    case s390x
+
     /**
      Maps the architecture to the values used by ESBuild: https://github.com/evanw/esbuild/tree/main/npm/%40esbuild
      */
