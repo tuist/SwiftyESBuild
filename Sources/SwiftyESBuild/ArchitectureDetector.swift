@@ -3,6 +3,7 @@ import TSCBasic
 import TSCUtility
 
 public enum CpuArchitecture: String, Hashable {
+    case aarch64   = "aarch64"
     case arm
     case arm64
     case armv7
@@ -20,7 +21,7 @@ public enum CpuArchitecture: String, Hashable {
      */
     var esbuildValue: String {
         switch self {
-        case .arm64: return "arm64"
+        case .arm64, .aarch64: return "arm64"
         case .armv7: return "armv7"
         case .x86_64: return "x64"
         case .arm: return "arm"
