@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.3.0
+
+### What's changed
+- We fixed a compatibility issue with the `aarch64` architecture.
+
+**Full Changelog**: https://github.com/tuist/SwiftyESBuild/compare/0.2.0...0.3.0
+
 ## 0.2.0
 
 ### Added
