@@ -117,7 +117,7 @@ class Downloader: Downloading {
         }
 
         logger.debug("Downloading \(npmPackage.name) from \(npmVersion.tarball)...")
-        let client = HTTPClient(eventLoopGroupProvider: .createNew)
+        let client = HTTPClient(eventLoopGroupProvider: .singleton)
 
         do {
             try await withTemporaryDirectory(removeTreeOnDeinit: true) { tmpDir in
@@ -193,7 +193,7 @@ class Downloader: Downloading {
         let packageURL = "https://registry.npmjs.org/\(npmPackageName)"
         logger.debug("Getting the package metadata from \(packageURL)")
 
-        let httpClient = HTTPClient(eventLoopGroupProvider: .createNew)
+        let httpClient = HTTPClient(eventLoopGroupProvider: .singleton)
 
         var package: NPMPackage!
         do {
