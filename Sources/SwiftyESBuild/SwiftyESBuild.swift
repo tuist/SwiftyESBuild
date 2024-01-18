@@ -12,8 +12,8 @@ public class SwiftyESBuild {
     /**
      Default initializer.
      - Parameters:
-     - version: The version of Tailwind to use. You can specify a fixed version or use the latest one.
-     - directory: The directory where the executables will be downloaded. When not provided, it defaults to the system's default temporary directory.
+       - version: The version of Tailwind to use. You can specify a fixed version or use the latest one.
+       - directory: The directory where the executables will be downloaded. When not provided, it defaults to the system's default temporary directory.
      */
     public convenience init(version: ESBuildVersion = .latest, directory: AbsolutePath) {
         self.init(version: version, directory: directory, downloader: Downloader(), executor: Executor())
@@ -22,7 +22,7 @@ public class SwiftyESBuild {
     /**
      Default initializer.
      - Parameters:
-     - version: The version of ESBuild to use. You can specify a fixed version or use the latest one.
+       - version: The version of ESBuild to use. You can specify a fixed version or use the latest one.
      */
     public convenience init(version: ESBuildVersion = .latest) {
         self.init(version: version, directory: Downloader.defaultDownloadDirectory(), downloader: Downloader(), executor: Executor())
@@ -43,8 +43,8 @@ public class SwiftyESBuild {
      Downloads the executable if needed and runs it with the given options. By default it runs the executable from the directory containing the entry point Javascript module.
 
      - Parameters:
-     - entryPoint: The path to the entry point Javascript module that ESBuild will use to traverse the module graph and generate the output bundle.
-     - options: A set of options to pass to the ESBuild executable to configure the bundling.
+       - entryPoint: The path to the entry point Javascript module that ESBuild will use to traverse the module graph and generate the output bundle.
+       - options: A set of options to pass to the ESBuild executable to configure the bundling.
      */
     public func run(entryPoint: AbsolutePath,
                     options: RunOption...) async throws
@@ -56,9 +56,9 @@ public class SwiftyESBuild {
      Downloads the executable if needed and runs it with the given options.
 
      - Parameters:
-     - entryPoint: The path to the entry point Javascript module that ESBuild will use to traverse the module graph and generate the output bundle.
-     - directory: Working directory from where to run the ESBuild executable.
-     - options: A set of options to pass to the ESBuild executable to configure the bundling.
+       - entryPoint: The path to the entry point Javascript module that ESBuild will use to traverse the module graph and generate the output bundle.
+       - directory: Working directory from where to run the ESBuild executable.
+       - options: A set of options to pass to the ESBuild executable to configure the bundling.
      */
     public func run(entryPoint: AbsolutePath,
                     directory: AbsolutePath,
@@ -71,9 +71,9 @@ public class SwiftyESBuild {
      Downloads the executable if needed and runs it with the given options.
 
      - Parameters:
-     - entryPoint: The path to the entry point Javascript module that ESBuild will use to traverse the module graph and generate the output bundle.
-     - directory: Working directory from where to run the ESBuild executable.
-     - options: A set of options to pass to the ESBuild executable to configure the bundling.
+       - entryPoint: The path to the entry point Javascript module that ESBuild will use to traverse the module graph and generate the output bundle.
+       - directory: Working directory from where to run the ESBuild executable.
+       - options: A set of options to pass to the ESBuild executable to configure the bundling.
      */
     public func run(entryPoint: AbsolutePath,
                     directory: AbsolutePath,
