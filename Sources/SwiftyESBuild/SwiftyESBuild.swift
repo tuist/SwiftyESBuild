@@ -185,14 +185,14 @@ public extension SwiftyESBuild {
         /**
          To bundle a file means to inline any imported dependencies into the file itself. This process is recursive so dependencies of dependencies (and so on) will also be inlined. By default esbuild will not bundle the input files.
          - [Documentation](https://esbuild.github.io/api/#bundle)
-         - **Flag:** --bundle
+         - **Flag:** `--bundle`
          */
         case bundle
 
         /**
          This option sets the output file name for the build operation. This is only applicable if there is a single entry point. If there are multiple entry points, you must use the outdir option instead to specify an output directory.
          - [Documentation](https://esbuild.github.io/api/#outfile)
-         - **Flag:** --outfile
+         - **Flag:** `--outfile`
          */
         case outfile(AbsolutePath)
 
