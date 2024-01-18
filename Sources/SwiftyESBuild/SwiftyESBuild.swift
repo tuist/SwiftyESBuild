@@ -12,7 +12,7 @@ public class SwiftyESBuild {
     /**
      Default initializer.
      - Parameters:
-       - version: The version of Tailwind to use. You can specify a fixed version or use the latest one.
+       - version: The version of ESBuild to use. You can specify a fixed version or use the latest one.
        - directory: The directory where the executables will be downloaded. When not provided, it defaults to the system's default temporary directory.
      */
     public convenience init(version: ESBuildVersion = .latest, directory: AbsolutePath) {
@@ -86,7 +86,7 @@ public class SwiftyESBuild {
     }
 
     /**
-     Downloads the Tailwind portable executable
+     Downloads the ESBuild portable executable.
      */
     private func download() async throws -> AbsolutePath {
         try await downloader.download(version: version, directory: directory)
@@ -95,7 +95,7 @@ public class SwiftyESBuild {
 
 extension Set<SwiftyESBuild.RunOption> {
     /**
-     Returns the flags to pass to the Tailwind CLI when invoking the `init` command.
+     Returns the flags to pass to the ESBuild CLI when invoking the `init` command.
      */
     var executableFlags: [String] {
         map(\.flag).flatMap { $0 }
