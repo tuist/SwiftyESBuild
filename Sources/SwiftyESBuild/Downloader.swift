@@ -169,12 +169,12 @@ class Downloader: Downloading {
         switch version {
         case let .fixed(rawVersion):
             if rawVersion.starts(with: "v") {
-                return rawVersion
-            } else {
                 /**
-                 Releases on GitHub are prefixed with "v" so we need to include it.
+                 Versions on the npm Registry are not prefixed with "v" so we need to remove it.
                  */
-                return "v\(rawVersion)"
+                return String(rawVersion.dropFirst())
+            } else {
+                return rawVersion
             }
         case .latest: return npmPackage.distTags.latest
         }
